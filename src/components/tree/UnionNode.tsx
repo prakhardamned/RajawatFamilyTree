@@ -17,6 +17,7 @@ export const UnionNode = memo(({ data }: UnionNodeProps) => {
       <Handle
         type="target"
         position={Position.Top}
+        id="top"
         className="!w-2 !h-2 !bg-amber-400 !border-1 !border-white"
       />
 
@@ -26,6 +27,7 @@ export const UnionNode = memo(({ data }: UnionNodeProps) => {
       <Handle
         type="source"
         position={Position.Bottom}
+        id="bottom"
         className="!w-2 !h-2 !bg-amber-500 !border-1 !border-white"
       />
     </div>

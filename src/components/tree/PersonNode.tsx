@@ -63,7 +63,22 @@ export const PersonNode = memo(({ data }: PersonNodeProps) => {
       <Handle
         type="target"
         position={Position.Top}
+        id="top"
         className="!w-2.5 !h-2.5 !bg-stone-400 !border-2 !border-white"
+      />
+
+      {/* Side handles for couple line connections */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className="!w-2 !h-2 !bg-amber-400 !border-1 !border-white"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className="!w-2 !h-2 !bg-amber-400 !border-1 !border-white"
       />
 
       <div className="p-3">
@@ -174,6 +189,7 @@ export const PersonNode = memo(({ data }: PersonNodeProps) => {
       <Handle
         type="source"
         position={Position.Bottom}
+        id="bottom"
         className="!w-2.5 !h-2.5 !bg-stone-400 !border-2 !border-white"
       />
     </div>
