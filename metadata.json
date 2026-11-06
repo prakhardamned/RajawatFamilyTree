@@ -1,0 +1,6 @@
+{
+  "name": "Family Tree",
+  "description": "Production-ready, client-side family tree with interactive graph visualisation, suggestions, role-based access, and zero-cost Firebase Spark hosting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

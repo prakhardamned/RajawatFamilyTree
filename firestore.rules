@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'google.com' && request.auth.token.email_verified == true;
+    }
+    function isAdmin() {
+      return signedIn() && request.auth.uid in ['pTYW4Z5IktaPXSqiZhdB2qbMfdn1'];
+    }
+    function memberPath() {
+      return /databases/$(database)/documents/members/$(request.auth.uid);
+    }
+    function isMember() {
+      return signedIn() && exists(memberPath()) && get(memberPath()).data.status == 'approved';
+    }
+    function canView() {
+      return isAdmin() || isMember();
+    }
+    function isOptString(d, k, max) {
+      return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= max);
+    }
+    function personStringsOk(d) {
+      return isOptString(d, 'firstName', 100)
+          && isOptString(d, 'lastName', 100)
+          && isOptString(d, 'nickname', 100)
+          && isOptString(d, 'birthDate', 10)
+          && isOptString(d, 'deathDate', 10)
+          && isOptString(d, 'birthPlace', 200)
+          && isOptString(d, 'occupation', 200)
+          && isOptString(d, 'notes', 5000)
+          && isOptString(d, 'photoThumb', 110000)
+          && isOptString(d, 'fatherId', 64)
+          && isOptString(d, 'motherId', 64);
+    }
+    function validPerson(d) {
+      return d.keys().hasOnly(['firstName','lastName','nickname','gender','birthYear',
+                               'birthDate','deathDate','isLiving','birthPlace','occupation','notes',
+                               'photoThumb','fatherId','motherId','spouseIds','createdAt','updatedAt','updatedBy'])
+          && d.firstName is string && d.firstName.size() > 0
+          && personStringsOk(d)
+          && d.gender in ['male','female','other']
+          && d.isLiving is bool
+          && (!('birthYear' in d) || d.birthYear == null || (d.birthYear is int && d.birthYear >= 1000 && d.birthYear <= 2100))
+          && (!('spouseIds' in d) || (d.spouseIds is list && d.spouseIds.size() <= 10))
+          && (!d.isLiving || !('birthDate' in d) || d.birthDate == null)
+          && d.updatedAt == request.time
+          && d.updatedBy == request.auth.uid;
+    }
+    function validProposed(p) {
+      return p is map
+          && p.size() <= 20
+          && p.keys().hasOnly(['firstName','lastName','nickname','gender','birthYear',
+                               'birthDate','deathDate','isLiving','birthPlace','occupation','notes',
+                               'photoThumb','fatherId','motherId','spouseIds','relationship','relatedPersonId'])
+          && personStringsOk(p)
+          && isOptString(p, 'relationship', 20)
+          && isOptString(p, 'relatedPersonId', 64);
+    }
+
+    match /persons/{personId} {
+      allow read: if canView();
+      allow create: if isAdmin() && validPerson(request.resource.data) && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && validPerson(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /personPrivate/{personId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /members/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.keys().hasOnly(['displayName','email','status','requestedAt'])
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() <= 100
+                    && request.resource.data.requestedAt == request.time;
+      allow update: if isAdmin()
+                    || (isMember() && request.auth.uid == uid
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSuggestionAt'])
+                        && request.resource.data.lastSuggestionAt == request.time
+                        && (!('lastSuggestionAt' in resource.data) || request.time > resource.data.lastSuggestionAt + duration.value(60, 's')));
+      allow delete: if isAdmin();
+    }
+
+    match /suggestions/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.submittedBy.uid == request.auth.uid);
+      allow create: if isMember()
+                    && request.resource.data.keys().hasOnly(['type','targetPersonId','proposedData',
+                                                             'message','submittedBy','status','createdAt'])
+                    && request.resource.data.type in ['add_person','edit_person','add_relationship',
+                                                      'remove_person','general_note']
+                    && request.resource.data.status == 'pending'
+                    && (request.resource.data.targetPersonId == null || (request.resource.data.targetPersonId is string && request.resource.data.targetPersonId.size() <= 64))
+                    && validProposed(request.resource.data.proposedData)
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() <= 2000
+                    && request.resource.data.submittedBy.keys().hasOnly(['uid','name','email'])
+                    && request.resource.data.submittedBy.uid == request.auth.uid
+                    && request.resource.data.submittedBy.email == request.auth.token.email
+                    && request.resource.data.createdAt == request.time
+                    && getAfter(memberPath()).data.lastSuggestionAt == request.time;
+      allow update, delete: if isAdmin();
+    }
+
+    // Everything else is denied by default.
+  }
+}
