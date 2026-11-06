@@ -1,148 +1,129 @@
-# Family Tree 🌳
+# Rajawat Family Tree 🌳
 
-A production-ready, client-side-only web app for preserving, viewing, and managing family genealogies with interactive tree visualization, suggestions workflow, role-based security, and zero-cost Firebase Spark hosting.
-
----
-
-## ⚡ Zero-Cost Architecture & Principles
-
-- **Firebase Spark Plan Guaranteed ($0/mo forever)**: Does not require Cloud Functions, Cloud Storage, or Blaze plan.
-- **Client-Side Only**: 100% static React + Vite SPA. No Node server backend.
-- **Privacy & Security First**: Plain text sanitization, living person privacy protections, and hardened Firestore security rules.
-- **Interactive Top-to-Bottom Tree**: Powered by `@xyflow/react` and Dagre with family couple nodes, ancestor/descendant filtering, smooth zoom/pan, minimap, and search-and-jump.
-- **Offline / Standalone Demo Mode**: Integrated in-memory 3-generation demo mode allows previewing, editing, exporting, and testing without requiring immediate Firebase configuration.
+A secure, private, client-side web application built specifically for preserving, exploring, and updating the genealogy of the **Rajawat family** across 6–7 generations. Powered by React, Vite, TypeScript, Tailwind CSS, and React Flow, running entirely on the **Firebase Spark (free) plan** with zero ongoing hosting or backend operational costs.
 
 ---
 
-## 🚀 Step-by-Step Setup Guide
+## 🎯 Purpose
 
-Follow these exact steps to launch your Family Tree on Firebase's free Spark plan:
-
-### 1. Create a Firebase Project
-- Go to the [Firebase Console](https://console.firebase.google.com/).
-- Click **Add project**, name it (e.g. `my-family-tree`), and continue.
-- Keep the project on the **Spark plan** (free forever; never upgrade to Blaze).
-
-### 2. Enable Google Authentication Only
-- In the Firebase Console sidebar, go to **Build** > **Authentication**.
-- Click **Get Started**, choose **Google** under Additional providers.
-- Enable the Google provider, set your project support email, and click **Save**.
-- Ensure all other providers (Email/Password, Phone, Anonymous) remain **disabled**.
-
-### 3. Create Firestore Database
-- Go to **Build** > **Firestore Database**.
-- Click **Create database**, select a region close to your family members.
-- Start in **Production mode** (we will deploy strict rules in Step 6).
-
-### 4. Register Web App & Configure Environment
-- In Project Overview, click the **Web icon (`</>`)** to register an app.
-- Name it (e.g. `Family Tree Web`), uncheck Firebase Hosting for now, and register.
-- Create a `.env` file in the root directory (copy from `.env.example`):
-  ```bash
-  cp .env.example .env
-  ```
-- Copy the Firebase configuration keys from the console into `.env`:
-  ```env
-  VITE_FIREBASE_API_KEY="AIzaSy..."
-  VITE_FIREBASE_AUTH_DOMAIN="my-family-tree.firebaseapp.com"
-  VITE_FIREBASE_PROJECT_ID="my-family-tree"
-  VITE_FIREBASE_STORAGE_BUCKET="my-family-tree.appspot.com"
-  VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
-  VITE_FIREBASE_APP_ID="1:123456789012:web:..."
-  ```
-
-### 5. Set Your Admin UID
-- Run the app locally with `npm run dev`.
-- Click **Sign in with Google** once.
-- Return to **Firebase Console** > **Authentication** > **Users** tab.
-- Copy your user's **User UID** string.
-- Paste it in:
-  1. `src/config.ts`: Add to `ADMIN_UIDS = ['YOUR_UID_HERE']`
-  2. `firestore.rules`: Replace `REPLACE_WITH_ADMIN_UID` with your UID:
-     ```javascript
-     function isAdmin() {
-       return signedIn() && request.auth.uid in ['YOUR_UID_HERE'];
-     }
-     ```
-
-### 6. Run Rules Tests & Deploy Security Rules
-- Install the Firebase CLI if you haven't already:
-  ```bash
-  npm install -g firebase-tools
-  firebase login
-  firebase use --add
-  ```
-- Run the comprehensive rules test suite with the emulator:
-  ```bash
-  npm run test:rules
-  ```
-- Deploy the security rules to Firestore:
-  ```bash
-  firebase deploy --only firestore:rules
-  ```
-
-### 7. Restrict API Key in Google Cloud Console
-- Go to [Google Cloud Console > APIs & Services > Credentials](https://console.cloud.google.com/apis/credentials).
-- Click your Firebase browser key (usually `Browser key (auto created by Firebase)`).
-- Under **Application restrictions**, select **Web sites / HTTP referrers**.
-- Add authorized referrers:
-  - `https://my-family-tree.web.app/*`
-  - `https://my-family-tree.firebaseapp.com/*`
-  - `http://localhost:*/*`
-- Under **API restrictions**, restrict to:
-  - Identity Toolkit API
-  - Token Service API
-  - Cloud Firestore API
-
-### 8. Authorize Hosting Domain in Firebase Auth
-- In Firebase Console > **Authentication** > **Settings** > **Authorized domains**.
-- Verify that your production hosting domain (`<project-id>.web.app` and `<project-id>.firebaseapp.com`) is present.
-
-### 9. Build and Deploy Hosting
-- Build the optimized production bundle:
-  ```bash
-  npm run build
-  ```
-- Deploy to Firebase Hosting:
-  ```bash
-  firebase deploy --only hosting
-  ```
-
-### 10. Regular Backup Procedure
-- In the app, navigate to **Settings** or the admin controls and click **Export Tree (JSON)** or **Export Tree (GEDCOM)**.
-- Store backups on an external drive or secure cloud storage.
-- *Reminder: The Firebase Spark (free) plan has no automatic database backups, so exporting backups regularly is essential.*
+The Rajawat Family Tree is designed as a living historical record and private portal for the extended Rajawat family. It allows generations of relatives—from elders to the youngest members across the diaspora—to explore their roots, trace lineage, discover relatives, and contribute verified family information through an administrative review workflow.
 
 ---
 
-## 🛡️ Security & Privacy Architecture
+## ✨ Features
 
-| Feature | Enforcement Level | Description |
+- **Interactive Family Tree Canvas**:
+  - Top-to-bottom generational layout powered by `@xyflow/react`.
+  - Spouses placed directly side-by-side on the same generational row, joined by an amber dashed couple line (`💍 Couple`).
+  - Family union nodes connecting parents down to their children.
+  - Generational rank calculation: spouses marrying into the family automatically align to their partner's generation.
+  - Interactive controls: smooth zoom, pan, fit-to-screen, minimap, and search-and-jump by name.
+  - Perspective filters: **All**, **Ancestors**, and **Descendants** relative to any selected root person.
+  - Branch collapsing and expanding for large family lines.
+- **Alternative People List View**:
+  - Full table view of all family members with birth years, parents, and quick action buttons.
+- **Member Collaboration & Suggestions**:
+  - Verified family members can submit edit proposals, propose new relatives, or report discrepancies.
+  - Rate-limited to 1 suggestion every 60 seconds to protect database write limits.
+  - "My Suggestions" status tracking for submitted proposals.
+- **Admin Management Portal**:
+  - Quick relative addition: Add Father, Mother, Spouse, Child, or Sibling with automatic reciprocal linking.
+  - Client-side image compression: Avatars compressed in the browser to max 200×200 JPEG (< 100 KB) and stored directly in Firestore (zero Cloud Storage requirement).
+  - Suggestions Inbox: Review submissions with side-by-side visual diffs, with options to Approve, Edit-then-Approve, or Reject with explanatory notes.
+  - Member management: Approve, block, or remove registered Google accounts.
+  - Safe deletion: Cascading cleanup automatically clears `fatherId`, `motherId`, and `spouseIds` across all related documents in a single atomic batch.
+  - Backup & Migration: Export tree data to JSON and standard GEDCOM formats; import validated JSON backups with schema validation.
+- **Living Person Privacy Safeguards**:
+  - Exact birth dates, residential addresses, phone numbers, and private notes for living members are isolated in restricted admin-only storage. Only birth year and living status are visible to family members.
+- **Offline / Standalone Demo Mode**:
+  - Built-in multi-generation demo dataset allowing demonstration and testing without configuring cloud credentials.
+
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| **React 19 & TypeScript** | Client-side reactive UI, strict typing, and modular state management |
+| **Vite** | Fast, modern frontend build tool and static asset bundler |
+| **Tailwind CSS** | Styling, responsive layouts, and typography |
+| **@xyflow/react (React Flow)** | Interactive node-and-edge canvas for family tree visualization |
+| **Firebase Authentication** | Google Sign-In only (`signInWithPopup`), email verification enforced |
+| **Cloud Firestore** | Serverless NoSQL document database with granular security rules |
+| **Firebase Hosting** | Global static CDN hosting under the free Spark tier |
+
+---
+
+## 👥 User Roles & Access Control
+
+| Role | Access Level | Description |
 |---|---|---|
-| **Admin Rights** | Server-side `firestore.rules` | UI admin controls are cosmetic; real validation and writes require `request.auth.uid in ADMIN_UIDS`. |
-| **Living Person Privacy** | Data model & Rules | If `isLiving == true`, exact birth date, address, phone, and private notes are NEVER placed in public `persons/{id}`. Only `birthYear` is visible. |
-| **Rate Limiting** | Firestore Security Rules | Submitting suggestions enforces batched write with `members/{uid}.lastSuggestionAt` checked with `+ duration.value(60, 's')`. |
-| **Member Verification** | Rules + Auth token | Only Google verified accounts (`email_verified == true`) with status `approved` in `members/{uid}` can read persons. |
-| **HTML Sanitization** | React Rendering | Plain-text interpolation only. No `dangerouslySetInnerHTML`. No arbitrary URL clickable redirects. |
+| **Admin** | Full Read & Write | Single designated family administrator defined by UID. Can create, edit, delete, manage members, review suggestions, and view private records. |
+| **Approved Member** | Read Tree + Submit Suggestions | Signed-in relative with an approved Google account. Can browse the tree, search members, and propose edits/additions. |
+| **Pending Member** | Waiting Room Screen | Signed-in with Google for the first time. Cannot view any family tree records until approved by the admin. |
+| **Blocked Member** | Access Denied | Explicitly blocked account. Cannot read or write any family data. |
+| **Signed Out** | Landing / Sign-In Screen | Public visitor. No access to names, photos, or family tree information. |
 
 ---
 
-## 📦 Features Overview
+## 📚 Project Documentation
 
-- **Interactive Family Tree Visualizer**:
-  - Top-to-bottom hierarchy with parent-child lines and union/couple nodes.
-  - Multi-marriage and remarriage support.
-  - Ancestors-only, Descendants-only, and All-Family tree filtering modes.
-  - Quick Search & Focus on any family member.
-  - Collapsible branches and navigation mini-map.
-- **Admin Dashboard**:
-  - Add Father, Mother, Spouse, Child, or Sibling with one click.
-  - Browser-side automatic photo compression to 200x200 JPEG < 100KB.
-  - Delete with automatic cascading cleanup of parent/spouse references.
-  - Member approval queue (Approve, Block, Remove).
-  - Suggestions inbox with side-by-side diff comparison and 1-click apply.
-  - Full JSON and standard GEDCOM export / JSON import with schema validator.
-- **Family Member Portal**:
-  - Suggest an Edit (calculates delta and only proposes changed fields).
-  - Suggest a Relative or Report an Error.
-  - "My Suggestions" status tracking.
+Detailed guides and architecture specifications are available in the [`docs/`](./docs) directory:
+
+1. [**System Architecture (`docs/ARCHITECTURE.md`)**](./docs/ARCHITECTURE.md) – Technical structure, data flow, Mermaid diagram, and zero-cost design rationale.
+2. [**Data Model (`docs/DATA_MODEL.md`)**](./docs/DATA_MODEL.md) – Complete Firestore collections schema, field definitions, relationship linkages, and examples.
+3. [**Security & Permissions (`docs/SECURITY.md`)**](./docs/SECURITY.md) – Security rules explanation, privacy boundaries for living relatives, and rate limiting.
+4. [**Administrator Guide (`docs/ADMIN_GUIDE.md`)**](./docs/ADMIN_GUIDE.md) – Step-by-step instructions for adding relatives, approving members, reviewing suggestions, and handling backups.
+5. [**Family Member Guide (`docs/FAMILY_GUIDE.md`)**](./docs/FAMILY_GUIDE.md) – Easy, non-technical instructions for relatives to sign in, explore, and submit suggestions.
+6. [**Privacy Policy & Guidelines (`docs/PRIVACY.md`)**](./docs/PRIVACY.md) – What personal data is stored, visibility rules, and data correction/removal procedures.
+7. [**Product Roadmap (`docs/ROADMAP.md`)**](./docs/ROADMAP.md) – Current capabilities, known considerations, and upcoming feature checklist (Hindi support, printable charts, etc.).
+8. [**Changelog (`CHANGELOG.md`)**](./CHANGELOG.md) – Release history and version notes following Keep a Changelog standards.
+
+---
+
+## 🚀 Quick Setup & Local Development
+
+### Prerequisites
+- Node.js 18+ and `npm`
+- A Firebase project on the free **Spark plan**
+
+### Installation
+```bash
+git clone <repository-url>
+cd family-tree
+npm install
+```
+
+### Configuration
+1. Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Populate `.env` with your Firebase web configuration:
+   ```env
+   VITE_FIREBASE_API_KEY="AIzaSy..."
+   VITE_FIREBASE_AUTH_DOMAIN="your-app.firebaseapp.com"
+   VITE_FIREBASE_PROJECT_ID="your-project-id"
+   VITE_FIREBASE_STORAGE_BUCKET="your-app.appspot.com"
+   VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
+   VITE_FIREBASE_APP_ID="1:123456789012:web:..."
+   ```
+3. Set your admin Google UID in `src/config.ts` and `firestore.rules`.
+
+### Running Locally
+```bash
+npm run dev
+```
+Open `http://localhost:3000` in your browser.
+
+### Deploying to Firebase Hosting
+```bash
+npm run build
+firebase deploy --only hosting,firestore:rules
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache 2.0 License.
